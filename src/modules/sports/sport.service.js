@@ -10,7 +10,10 @@ const {
 
 class SportService {
   async getAllSports() {
-    const sports = await Sport.find().sort({ position: 1, createdAt: -1 }).lean();
+    const sports = await Sport.find()
+      .sort({ position: 1, createdAt: -1 })
+      .populate("sport", "name")
+      .lean();
     return sports.map((s) => ({
       ...s,
       bgImg: s.bgImg?.url || null,
@@ -23,13 +26,18 @@ class SportService {
 
     if (!sport) return null;
 
-    let coaches = await Coach.find({ sport: sport._id }).sort({ position: 1, createdAt: -1 }).lean();
+    let coaches = await Coach.find({ sport: sport._id })
+      .sort({ position: 1, createdAt: -1 })
+      .populate("sport", "name")
+      .lean();
     coaches = coaches.map((c) => ({ ...c, image: c.image?.url || null }));
 
     let currentPlayers = await Player.find({
       sport: sport._id,
       type: "current",
-    }).sort({ position: 1, createdAt: -1 }).lean();
+    })
+      .sort({ position: 1, createdAt: -1 })
+      .lean();
     currentPlayers = currentPlayers.map((p) => ({
       ...p,
       image: p.image?.url || null,
@@ -38,7 +46,9 @@ class SportService {
     let formerPlayers = await Player.find({
       sport: sport._id,
       type: "former",
-    }).sort({ position: 1, createdAt: -1 }).lean();
+    })
+      .sort({ position: 1, createdAt: -1 })
+      .lean();
     formerPlayers = formerPlayers.map((p) => ({
       ...p,
       image: p.image?.url || null,
