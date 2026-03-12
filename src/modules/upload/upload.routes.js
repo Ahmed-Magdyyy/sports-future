@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const protect = require("../../middlewares/auth.middleware");
-const { upload } = require("../../utils/cloudinary");
+const { uploadSingleImage } = require("../../middlewares/upload.middleware");
 
 // @desc    Upload an image
 // @route   POST /api/upload
 // @access  Private
-router.post("/", protect, upload.single("image"), (req, res) => {
+router.post("/", protect, uploadSingleImage("image"), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No image file provided" });

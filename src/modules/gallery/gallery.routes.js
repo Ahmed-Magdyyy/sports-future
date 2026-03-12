@@ -6,12 +6,12 @@ const {
   deleteGalleryImage,
 } = require("./gallery.controller");
 const protect = require("../../middlewares/auth.middleware");
-const { upload } = require("../../utils/cloudinary");
+const { uploadSingleImage } = require("../../middlewares/upload.middleware");
 
 router
   .route("/")
   .get(getGalleryImages)
-  .post(protect, upload.single("image"), createGalleryImage);
+  .post(protect, uploadSingleImage("image"), createGalleryImage);
 
 router.route("/:id").delete(protect, deleteGalleryImage);
 
