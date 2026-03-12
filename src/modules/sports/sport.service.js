@@ -12,7 +12,6 @@ class SportService {
   async getAllSports() {
     const sports = await Sport.find()
       .sort({ position: 1, createdAt: -1 })
-      .populate("sport", "name")
       .lean();
     return sports.map((s) => ({
       ...s,
@@ -28,7 +27,6 @@ class SportService {
 
     let coaches = await Coach.find({ sport: sport._id })
       .sort({ position: 1, createdAt: -1 })
-      .populate("sport", "name")
       .lean();
     coaches = coaches.map((c) => ({ ...c, image: c.image?.url || null }));
 
