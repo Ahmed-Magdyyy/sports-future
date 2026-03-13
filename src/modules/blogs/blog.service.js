@@ -5,10 +5,47 @@ const {
   deleteImageFromCloudinary,
 } = require("../../utils/imageUpload");
 class BlogService {
-  async getAllBlogs() {
-    return await Blog.find()
+  async getAllBlogs(query = {}) {
+    const { page, limit, sport } = query;
+    let filter = {};
+    
+    if (sport && sport !== "all" && sport !== "") {
+      if (sport === "general") {
+        filter.sport = null;
+      } else {
+        filter.sport = sport;
+      }
+    }
+
+    let blogsQuery = Blog.find(filter)
       .populate("sport", "name heroTitle")
       .sort({ position: 1, createdAt: -1 });
+
+    if (page && limit) {
+      const parsedPage = parseInt(page, 10);
+      const parsedLimit = parseInt(limit, 10);
+      const skip = (parsedPage - 1) * parsedLimit;
+
+      const [blogs, totalCount] = await Promise.all([
+        blogsQuery.skip(skip).limit(parsedLimit).exec(),
+        Blog.countDocuments(filter),
+      ]);
+
+      return {
+        blogs,
+        totalCount,
+        totalPages: Math.ceil(totalCount / parsedLimit),
+        currentPage: parsedPage,
+      };
+    }
+
+    const blogs = await blogsQuery.exec();
+    return {
+      blogs,
+      totalCount: blogs.length,
+      totalPages: 1,
+      currentPage: 1,
+    };
   }
 
   async createBlog(data, file) {

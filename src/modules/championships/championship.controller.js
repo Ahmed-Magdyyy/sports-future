@@ -19,6 +19,16 @@ const getUpcomingChampionship = async (req, res) => {
   }
 };
 
+const getMatchesBySport = async (req, res) => {
+  try {
+    const { sportId } = req.params;
+    const matches = await championshipService.findMatchesBySport(sportId);
+    res.json(matches);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 const createChampionship = async (req, res) => {
   try {
     const savedChampionship = await championshipService.create(req.body, req.file || null);
@@ -66,6 +76,7 @@ const deleteChampionship = async (req, res) => {
 module.exports = {
   getChampionships,
   getUpcomingChampionship,
+  getMatchesBySport,
   createChampionship,
   reorderChampionships,
   updateChampionship,

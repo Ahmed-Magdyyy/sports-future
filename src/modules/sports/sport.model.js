@@ -24,6 +24,18 @@ const sportSchema = new mongoose.Schema(
       public_id: { type: String },
       url: { type: String },
     },
+    achievementsTournaments: {
+      type: Number,
+      default: 0,
+    },
+    achievementsStaff: {
+      type: Number,
+      default: 0,
+    },
+    achievementsPlayers: {
+      type: Number,
+      default: 0,
+    },
     position: {
       type: Number,
       default: 0,

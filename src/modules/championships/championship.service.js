@@ -31,6 +31,7 @@ const findAll = async (month, year) => {
   const championships = await Championship.find(query)
     .sort({ position: 1, date: 1 })
     .populate("sport", "name")
+    .populate("coach", "name")
     .lean();
   return championships.map(c => ({
     ...c,
@@ -51,6 +52,7 @@ const findUpcoming = async () => {
   })
     .sort({ date: 1 })
     .populate("sport", "name")
+    .populate("coach", "name image")
     .lean();
 
   if (!upcoming) return null;
@@ -58,6 +60,62 @@ const findUpcoming = async () => {
   return {
     ...upcoming,
     image: upcoming.image?.url || null,
+  };
+};
+
+/**
+ * Get organized matches for a specific sport (Previous, Next, After Next)
+ * @param {string} sportId - The ID of the sport
+ * @returns {Promise<Object>} { previous, next, afterNext }
+ */
+const findMatchesBySport = async (sportId) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Find the next upcoming match
+  const nextMatch = await Championship.findOne({
+    sport: sportId,
+    date: { $gte: today },
+  })
+    .sort({ date: 1 })
+    .populate("coach", "name image")
+    .lean();
+
+  let afterNextMatch = null;
+  if (nextMatch) {
+    // Find the one right after nextMatch
+    afterNextMatch = await Championship.findOne({
+      sport: sportId,
+      date: { $gte: nextMatch.date },
+      _id: { $ne: nextMatch._id },
+    })
+      .sort({ date: 1 })
+      .populate("coach", "name image")
+      .lean();
+  }
+
+  // Find the most recent previous match
+  const previousMatchQuery = nextMatch
+    ? { sport: sportId, date: { $lte: nextMatch.date }, _id: { $ne: nextMatch._id } }
+    : { sport: sportId, date: { $lt: today } };
+
+  const previousMatch = await Championship.findOne(previousMatchQuery)
+    .sort({ date: -1 })
+    .populate("coach", "name image")
+    .lean();
+
+  const formatMatch = (m) => {
+    if (!m) return null;
+    return {
+      ...m,
+      image: m.image?.url || null,
+    };
+  };
+
+  return {
+    previous: formatMatch(previousMatch),
+    next: formatMatch(nextMatch),
+    afterNext: formatMatch(afterNextMatch),
   };
 };
 
@@ -192,4 +250,5 @@ module.exports = {
   update,
   remove,
   updatePositions,
+  findMatchesBySport,
 };

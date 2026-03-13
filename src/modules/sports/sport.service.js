@@ -120,7 +120,6 @@ class SportService {
         public_id: result.public_id,
       };
     }
-
     const updatedSport = await Sport.findOneAndUpdate(
       { name: sportName },
       {

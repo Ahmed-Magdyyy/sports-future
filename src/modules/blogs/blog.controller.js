@@ -3,8 +3,8 @@ const blogService = require("./blog.service");
 class BlogController {
   async getAllBlogs(req, res) {
     try {
-      const blogs = await blogService.getAllBlogs();
-      res.json(blogs);
+      const result = await blogService.getAllBlogs(req.query);
+      res.json(result);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

@@ -29,9 +29,9 @@ const championshipSchema = new mongoose.Schema(
       required: true,
     },
     coach: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Coach",
       required: true,
-      trim: true,
     },
     image: {
       public_id: { type: String },
