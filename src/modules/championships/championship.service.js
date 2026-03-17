@@ -22,14 +22,14 @@ const findAll = async (month, year) => {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
 
-    query.date = {
+    query.startDate = {
       $gte: startDate,
       $lte: endDate,
     };
   }
 
   const championships = await Championship.find(query)
-    .sort({ position: 1, date: 1 })
+    .sort({ position: 1, startDate: 1 })
     .populate("sport", "name")
     .populate("coach", "name")
     .lean();
@@ -48,9 +48,9 @@ const findUpcoming = async () => {
   today.setHours(0, 0, 0, 0);
 
   const upcoming = await Championship.findOne({
-    date: { $gte: today },
+    startDate: { $gte: today },
   })
-    .sort({ date: 1 })
+    .sort({ startDate: 1 })
     .populate("sport", "name")
     .populate("coach", "name image")
     .lean();
@@ -75,9 +75,9 @@ const findMatchesBySport = async (sportId) => {
   // Find the next upcoming match
   const nextMatch = await Championship.findOne({
     sport: sportId,
-    date: { $gte: today },
+    startDate: { $gte: today },
   })
-    .sort({ date: 1 })
+    .sort({ startDate: 1 })
     .populate("coach", "name image")
     .lean();
 
@@ -86,21 +86,21 @@ const findMatchesBySport = async (sportId) => {
     // Find the one right after nextMatch
     afterNextMatch = await Championship.findOne({
       sport: sportId,
-      date: { $gte: nextMatch.date },
+      startDate: { $gte: nextMatch.startDate },
       _id: { $ne: nextMatch._id },
     })
-      .sort({ date: 1 })
+      .sort({ startDate: 1 })
       .populate("coach", "name image")
       .lean();
   }
 
   // Find the most recent previous match
   const previousMatchQuery = nextMatch
-    ? { sport: sportId, date: { $lte: nextMatch.date }, _id: { $ne: nextMatch._id } }
-    : { sport: sportId, date: { $lt: today } };
+    ? { sport: sportId, startDate: { $lte: nextMatch.startDate }, _id: { $ne: nextMatch._id } }
+    : { sport: sportId, startDate: { $lt: today } };
 
   const previousMatch = await Championship.findOne(previousMatchQuery)
-    .sort({ date: -1 })
+    .sort({ startDate: -1 })
     .populate("coach", "name image")
     .lean();
 

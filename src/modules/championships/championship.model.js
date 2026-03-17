@@ -16,16 +16,17 @@ const championshipSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
-    date: {
+    desc: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    startDate: {
       type: Date,
       required: true,
     },
-    startTime: {
-      type: String, // e.g., "5:00 PM"
-      required: true,
-    },
-    endTime: {
-      type: String, // e.g., "9:00 PM"
+    endDate: {
+      type: Date,
       required: true,
     },
     coach: {

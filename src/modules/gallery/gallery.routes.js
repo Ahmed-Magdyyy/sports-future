@@ -4,6 +4,7 @@ const {
   getGalleryImages,
   createGalleryImage,
   deleteGalleryImage,
+  toggleShowInHome,
 } = require("./gallery.controller");
 const protect = require("../../middlewares/auth.middleware");
 const { uploadSingleImage } = require("../../middlewares/upload.middleware");
@@ -14,5 +15,6 @@ router
   .post(protect, uploadSingleImage("image"), createGalleryImage);
 
 router.route("/:id").delete(protect, deleteGalleryImage);
+router.route("/:id/toggle-home").put(protect, toggleShowInHome);
 
 module.exports = router;

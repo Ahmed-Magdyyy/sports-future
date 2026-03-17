@@ -1,4 +1,19 @@
 const pageService = require("./page.service");
+const sharp = require("sharp");
+const { cloudinary } = require("../../utils/cloudinary");
+
+const uploadStream = (buffer, folder) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: folder, resource_type: "auto" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    stream.end(buffer);
+  });
+};
 
 // @desc    Get all text sections for a specific page (e.g., "home")
 // @route   GET /api/pages/:pageName
@@ -19,9 +34,22 @@ const getPageSections = async (req, res) => {
 // @access  Private (Admin)
 const upsertPageSection = async (req, res) => {
   try {
-    const { value } = req.body;
-    if (!value) {
-      return res.status(400).json({ message: "Value is required" });
+    let { value } = req.body;
+    
+    // Check if an image is uploaded
+    if (req.file) {
+      // Process with Sharp directly from the memory buffer
+      const processedBuffer = await sharp(req.file.buffer)
+        .resize({ width: 1200, withoutEnlargement: true }) // Max width 1200px
+        .webp({ quality: 80 }) // Convert to WEBP
+        .toBuffer();
+
+      const result = await uploadStream(processedBuffer, "sport-future-2/pages");
+      value = result.secure_url;
+    }
+
+    if (!value && !req.file) {
+      return res.status(400).json({ message: "Value or image is required" });
     }
 
     const section = await pageService.upsertSection(
