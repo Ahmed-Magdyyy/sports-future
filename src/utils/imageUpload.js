@@ -78,13 +78,50 @@ async function uploadImageToCloudinary(file, { folder, publicId } = {}) {
   }
 }
 
-async function deleteImageFromCloudinary(publicId) {
+async function deleteImageFromCloudinary(publicId, resourceType = "image") {
   if (!publicId) return;
   try {
-    await cloudinary.uploader.destroy(publicId);
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   } catch (err) {
     console.error("Cloudinary Delete Error:", err);
     // swallow cleanup errors so they don't break the main flow
+  }
+}
+
+async function uploadFileToCloudinary(file, { folder, publicId } = {}) {
+  if (!file) return null;
+
+  try {
+    return new Promise((resolve, reject) => {
+      const options = {
+        folder,
+        resource_type: "auto",
+      };
+      if (publicId) {
+        options.public_id = publicId;
+      }
+
+      const uploadStream = cloudinary.uploader.upload_stream(
+        options,
+        (error, result) => {
+          if (error) {
+            console.error("Cloudinary Upload Error:", error);
+            return reject(new ApiError("Failed to upload file", 500));
+          }
+          resolve({
+            public_id: result.public_id,
+            url: result.secure_url || result.url,
+            resource_type: result.resource_type,
+          });
+        }
+      );
+
+      // Pass the raw buffer directly
+      uploadStream.end(file.buffer);
+    });
+  } catch (err) {
+    console.error("File Processing Error:", err);
+    throw new ApiError("Failed to process file", 500);
   }
 }
 
@@ -92,4 +129,5 @@ module.exports = {
   validateImageFile,
   uploadImageToCloudinary,
   deleteImageFromCloudinary,
+  uploadFileToCloudinary,
 };

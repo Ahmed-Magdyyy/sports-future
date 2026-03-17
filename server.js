@@ -31,6 +31,7 @@ app.use(
 app.use("/api/gallery", require("./src/modules/gallery/gallery.routes"));
 app.use("/api/upload", require("./src/modules/upload/upload.routes"));
 app.use("/api/blogs", require("./src/modules/blogs/blog.routes"));
+app.use("/api/letters", require("./src/modules/letters/letter.routes"));
 
 // Base Route
 app.get("/", (req, res) => {
