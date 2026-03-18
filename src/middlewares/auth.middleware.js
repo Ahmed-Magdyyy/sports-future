@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -15,14 +15,17 @@ const protect = (req, res, next) => {
         process.env.JWT_SECRET || "sports_future_super_secret_key",
       );
 
-      // In a real app we'd fetch the user from DB, but here we just check role
-      if (decoded.role !== "admin") {
+      // Fetch user from DB
+      const User = require("../modules/users/user.model");
+      const user = await User.findById(decoded.id).select("-password");
+
+      if (!user) {
         return res
           .status(401)
-          .json({ success: false, message: "Not authorized as admin" });
+          .json({ success: false, message: "Not authorized, user not found" });
       }
 
-      req.user = decoded; // { role: 'admin', iat, exp }
+      req.user = user;
       next();
     } catch (error) {
       console.error(error);

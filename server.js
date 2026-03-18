@@ -33,6 +33,7 @@ app.use("/api/upload", require("./src/modules/upload/upload.routes"));
 app.use("/api/blogs", require("./src/modules/blogs/blog.routes"));
 app.use("/api/letters", require("./src/modules/letters/letter.routes"));
 app.use("/api/products", require("./src/modules/products/product.routes"));
+app.use("/api/users", require("./src/modules/users/user.routes"));
 
 // Base Route
 app.get("/", (req, res) => {
