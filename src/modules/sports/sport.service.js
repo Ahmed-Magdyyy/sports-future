@@ -145,7 +145,31 @@ class SportService {
     await Sport.bulkWrite(bulkOps);
   }
 
-  // Admin routes for deleting sports will be added here
+  async deleteSport(name) {
+    const sportName = name.trim().toLowerCase();
+    const sport = await Sport.findOne({ name: sportName });
+
+    if (!sport) {
+      throw new ApiError("Sport not found", 404);
+    }
+
+    const coachesCount = await Coach.countDocuments({ sport: sport._id });
+    const playersCount = await Player.countDocuments({ sport: sport._id });
+
+    if (coachesCount > 0 || playersCount > 0) {
+      throw new ApiError(
+        `لا يمكن حذف هذا النشاط لارتباطه بـ ${coachesCount} مدرب(ين) و ${playersCount} لاعب(ين). قم بحذفهم أولاً.`,
+        400
+      );
+    }
+
+    if (sport.bgImg && sport.bgImg.public_id) {
+      await deleteImageFromCloudinary(sport.bgImg.public_id);
+    }
+
+    await Sport.deleteOne({ _id: sport._id });
+    return true;
+  }
 }
 
 module.exports = new SportService();

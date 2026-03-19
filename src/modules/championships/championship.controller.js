@@ -31,7 +31,7 @@ const getMatchesBySport = async (req, res) => {
 
 const createChampionship = async (req, res) => {
   try {
-    const savedChampionship = await championshipService.create(req.body, req.file || null);
+    const savedChampionship = await championshipService.create(req.body);
     res.status(201).json(savedChampionship);
   } catch (err) {
     res.status(err.statusCode || 400).json({ message: err.message });
@@ -55,8 +55,7 @@ const updateChampionship = async (req, res) => {
   try {
     const updatedChampionship = await championshipService.update(
       req.params.id,
-      req.body,
-      req.file || null
+      req.body
     );
     res.json(updatedChampionship);
   } catch (err) {

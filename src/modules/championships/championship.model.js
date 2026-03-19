@@ -11,15 +11,13 @@ const championshipSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Sport",
     },
-    rival: {
+    location: {
       type: String,
-      trim: true,
-      default: "",
+      required: true,
     },
     desc: {
       type: String,
       trim: true,
-      default: "",
     },
     startDate: {
       type: Date,
@@ -34,10 +32,7 @@ const championshipSchema = new mongoose.Schema(
       ref: "Coach",
       required: true,
     },
-    image: {
-      public_id: { type: String },
-      url: { type: String },
-    },
+
     position: {
       type: Number,
       default: 0,

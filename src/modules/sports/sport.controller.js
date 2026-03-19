@@ -73,10 +73,23 @@ const reorderSports = async (req, res) => {
   }
 };
 
+// @desc    Delete a sport
+// @route   DELETE /api/sports/:name
+// @access  Private (Admin)
+const deleteSport = async (req, res) => {
+  try {
+    await sportService.deleteSport(req.params.name);
+    res.json({ message: "Sport deleted successfully" });
+  } catch (err) {
+    res.status(err.statusCode || 400).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getSports,
   getSportByName,
   createSport,
   updateSport,
   reorderSports,
+  deleteSport,
 };

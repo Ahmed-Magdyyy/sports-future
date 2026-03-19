@@ -6,6 +6,7 @@ const {
   createSport,
   updateSport,
   reorderSports,
+  deleteSport,
 } = require("./sport.controller");
 const protect = require("../../middlewares/auth.middleware");
 const { uploadSingleImage } = require("../../middlewares/upload.middleware");
@@ -16,5 +17,6 @@ router.post("/reorder", protect, reorderSports);
 
 router.get("/:name", getSportByName);
 router.put("/:name", protect, uploadSingleImage("bgImg"), updateSport);
+router.delete("/:name", protect, deleteSport);
 
 module.exports = router;

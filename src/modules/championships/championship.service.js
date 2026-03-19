@@ -1,10 +1,5 @@
 const Championship = require("./championship.model");
 const { ApiError } = require("../../utils/ApiError");
-const {
-  validateImageFile,
-  uploadImageToCloudinary,
-  deleteImageFromCloudinary,
-} = require("../../utils/imageUpload");
 
 /**
  * Get all championships, optionally filtered by month and year.
@@ -22,10 +17,19 @@ const findAll = async (month, year) => {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
 
-    query.startDate = {
-      $gte: startDate,
-      $lte: endDate,
-    };
+    // An event overlaps with the month if:
+    // It starts before or during the month AND ends after or during the month
+    query.$or = [
+      {
+        startDate: { $lte: endDate },
+        endDate: { $gte: startDate },
+      },
+      // Fallback for events that might not have an endDate (if any)
+      {
+        startDate: { $gte: startDate, $lte: endDate },
+        endDate: { $exists: false }
+      }
+    ];
   }
 
   const championships = await Championship.find(query)
@@ -33,10 +37,7 @@ const findAll = async (month, year) => {
     .populate("sport", "name")
     .populate("coach", "name")
     .lean();
-  return championships.map(c => ({
-    ...c,
-    image: c.image?.url || null,
-  }));
+  return championships;
 };
 
 /**
@@ -57,10 +58,7 @@ const findUpcoming = async () => {
 
   if (!upcoming) return null;
 
-  return {
-    ...upcoming,
-    image: upcoming.image?.url || null,
-  };
+  return upcoming;
 };
 
 /**
@@ -96,7 +94,11 @@ const findMatchesBySport = async (sportId) => {
 
   // Find the most recent previous match
   const previousMatchQuery = nextMatch
-    ? { sport: sportId, startDate: { $lte: nextMatch.startDate }, _id: { $ne: nextMatch._id } }
+    ? {
+        sport: sportId,
+        startDate: { $lte: nextMatch.startDate },
+        _id: { $ne: nextMatch._id },
+      }
     : { sport: sportId, startDate: { $lt: today } };
 
   const previousMatch = await Championship.findOne(previousMatchQuery)
@@ -104,18 +106,10 @@ const findMatchesBySport = async (sportId) => {
     .populate("coach", "name image")
     .lean();
 
-  const formatMatch = (m) => {
-    if (!m) return null;
-    return {
-      ...m,
-      image: m.image?.url || null,
-    };
-  };
-
   return {
-    previous: formatMatch(previousMatch),
-    next: formatMatch(nextMatch),
-    afterNext: formatMatch(afterNextMatch),
+    previous: previousMatch,
+    next: nextMatch,
+    afterNext: afterNextMatch,
   };
 };
 
@@ -125,34 +119,11 @@ const findMatchesBySport = async (sportId) => {
  * @param {Object} file - Uploaded Multer file
  * @returns {Promise<Object>} Created championship
  */
-const create = async (payload, file) => {
-  let imageObj;
-
-  if (file) {
-    validateImageFile(file);
-    const result = await uploadImageToCloudinary(file, {
-      folder: "sportfuture/championships",
-      publicId: `championship_${Date.now()}`,
-    });
-    imageObj = {
-      url: result.url,
-      public_id: result.public_id,
-    };
-  }
-
+const create = async (payload) => {
   try {
-    const championship = await Championship.create({
-      ...payload,
-      ...(imageObj && { image: imageObj }), // Only set if provided
-    });
-    return {
-      ...championship.toObject(),
-      image: championship.image?.url || null,
-    };
+    const championship = await Championship.create(payload);
+    return championship.toObject();
   } catch (err) {
-    if (imageObj?.public_id) {
-      await deleteImageFromCloudinary(imageObj.public_id);
-    }
     throw err;
   }
 };
@@ -178,48 +149,19 @@ const updatePositions = async (items) => {
  * @param {Object} file - New image file (optional)
  * @returns {Promise<Object>} Updated championship
  */
-const update = async (id, payload, file) => {
+const update = async (id, payload) => {
   const championship = await Championship.findById(id);
   if (!championship) {
     throw new ApiError(404, "Championship not found");
   }
 
-  let newImageObj;
-  if (file) {
-    validateImageFile(file);
-    const result = await uploadImageToCloudinary(file, {
-      folder: "sportfuture/championships",
-      publicId: `championship_${Date.now()}`,
-    });
-    newImageObj = {
-      url: result.url,
-      public_id: result.public_id,
-    };
-  }
-
   try {
-    const updated = await Championship.findByIdAndUpdate(
-      id,
-      {
-        ...payload,
-        ...(newImageObj && { image: newImageObj }),
-      },
-      { new: true }
-    );
+    const updated = await Championship.findByIdAndUpdate(id, payload, {
+      new: true,
+    });
 
-    // If new image uploaded and old image existed, delete old image
-    if (newImageObj && championship.image?.public_id) {
-      await deleteImageFromCloudinary(championship.image.public_id).catch(console.error);
-    }
-
-    return {
-      ...updated.toObject(),
-      image: updated.image?.url || null,
-    };
+    return updated.toObject();
   } catch (err) {
-    if (newImageObj) {
-      await deleteImageFromCloudinary(newImageObj.public_id).catch(console.error);
-    }
     throw err;
   }
 };
@@ -232,12 +174,6 @@ const remove = async (id) => {
   const championship = await Championship.findById(id);
   if (!championship) {
     throw new ApiError(404, "Championship not found");
-  }
-
-  if (championship.image?.public_id) {
-    await deleteImageFromCloudinary(championship.image.public_id).catch(
-      console.error
-    );
   }
 
   await Championship.findByIdAndDelete(id);
