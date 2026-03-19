@@ -159,7 +159,7 @@ class SportService {
     if (coachesCount > 0 || playersCount > 0) {
       throw new ApiError(
         `لا يمكن حذف هذا النشاط لارتباطه بـ ${coachesCount} مدرب(ين) و ${playersCount} لاعب(ين). قم بحذفهم أولاً.`,
-        400
+        400,
       );
     }
 
