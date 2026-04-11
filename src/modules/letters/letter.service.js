@@ -9,11 +9,47 @@ const {
 const path = require("path");
 
 class LetterService {
-  async getLettersByType(type) {
+  async getLetters(query = {}) {
+    const { type, page, limit, startDate, endDate } = query;
+    let filter = {};
+
     if (type) {
-      return await Letter.find({ type }).sort({ createdAt: -1 }).lean();
+      filter.type = type;
     }
-    return await Letter.find().sort({ createdAt: -1 }).lean();
+
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = startDate;
+      if (endDate) filter.date.$lte = endDate;
+    }
+
+    let lettersQuery = Letter.find(filter).sort({ date: -1, createdAt: -1 });
+
+    if (page && limit) {
+      const parsedPage = parseInt(page, 10);
+      const parsedLimit = parseInt(limit, 10);
+      const skip = (parsedPage - 1) * parsedLimit;
+
+      const [letters, totalCount] = await Promise.all([
+        lettersQuery.skip(skip).limit(parsedLimit).lean().exec(),
+        Letter.countDocuments(filter),
+      ]);
+
+      return {
+        letters,
+        totalCount,
+        totalPages: Math.ceil(totalCount / parsedLimit),
+        currentPage: parsedPage,
+      };
+    }
+
+    const letters = await lettersQuery.lean().exec();
+    return {
+      letters,
+      totalCount: letters.length,
+      totalPages: 1,
+      currentPage: 1,
+    };
   }
 
   async getLetterById(id) {

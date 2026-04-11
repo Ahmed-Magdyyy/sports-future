@@ -5,8 +5,7 @@ const letterService = require("./letter.service");
 // @access  Private (Admin)
 const getLetters = async (req, res) => {
   try {
-    const { type } = req.query; // ?type=صادر or ?type=وارد
-    const letters = await letterService.getLettersByType(type);
+    const letters = await letterService.getLetters(req.query);
     res.json(letters);
   } catch (err) {
     res.status(500).json({ message: err.message });

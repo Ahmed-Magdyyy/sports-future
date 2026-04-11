@@ -3,6 +3,7 @@ const cors = require("cors");
 const connectDB = require("./src/config/db");
 require("dotenv").config();
 // const https = require("https");
+const { saudiTimezoneReplacer } = require("./src/utils/saudiTimezone");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,9 @@ connectDB();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Set global JSON replacer for timezone correction
+app.set("json replacer", saudiTimezoneReplacer);
 
 // Routes
 app.use(
